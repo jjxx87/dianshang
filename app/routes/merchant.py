@@ -6,6 +6,7 @@ from flask_login import login_required, current_user
 from app import db
 from app.models import Product, Order, OrderItem
 from app.forms import ProductForm
+from sqlalchemy.exc import IntegrityError
 
 bp = Blueprint('merchant', __name__)
 
@@ -84,9 +85,13 @@ def delete_product(id):
     product = Product.query.get_or_404(id)
     if product.merchant_id != current_user.id:
         abort(403)
-    db.session.delete(product)
-    db.session.commit()
-    flash('商品已删除。', 'success')
+    try:
+        db.session.delete(product)
+        db.session.commit()
+        flash('商品已删除。', 'success')
+    except IntegrityError:
+        db.session.rollback()
+        flash('无法删除该商品，因为它已被包含在订单中。', 'danger')
     return redirect(url_for('merchant.dashboard'))
 
 @bp.route('/orders')
