@@ -3,7 +3,7 @@
 {% block content %}
 <div class="container">
     <h2 class="mb-4">{{ title }}</h2>
-    <form method="POST">
+    <form method="POST" enctype="multipart/form-data">
         {{ form.hidden_tag() }}
         <div class="mb-3">
             {{ form.name.label(class="form-label") }}
@@ -36,11 +36,17 @@
             </div>
         </div>
         <div class="mb-3">
-            {{ form.image_url.label(class="form-label") }}
-            {{ form.image_url(class="form-control") }}
-            {% for error in form.image_url.errors %}
+            {{ form.image.label(class="form-label") }}
+            {{ form.image(class="form-control") }}
+            {% for error in form.image.errors %}
             <div class="text-danger">{{ error }}</div>
             {% endfor %}
+            {% if product and product.image_url %}
+            <div class="mt-2">
+                <p>当前图片:</p>
+                <img src="{{ url_for('static', filename=product.image_url) }}" alt="Current Image" style="max-height: 200px;">
+            </div>
+            {% endif %}
         </div>
         <button type="submit" class="btn btn-primary">提交</button>
         <a href="{{ url_for('merchant.dashboard') }}" class="btn btn-secondary">取消</a>

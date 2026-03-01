@@ -1,4 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app
+import os
+import uuid
+from werkzeug.utils import secure_filename
+from flask import Blueprint, render_template, redirect, url_for, flash, abort, current_app, request
 from flask_login import login_required, current_user
 from app import db
 from app.models import Product, Order, OrderItem
@@ -27,12 +30,22 @@ def dashboard():
 def new_product():
     form = ProductForm()
     if form.validate_on_submit():
+        image_url = None
+        if form.image.data:
+            f = form.image.data
+            filename = secure_filename(f.filename)
+            # Ensure unique filename
+            filename = f"{uuid.uuid4().hex}_{filename}"
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            f.save(upload_path)
+            image_url = f"uploads/{filename}"
+
         product = Product(
             name=form.name.data,
             description=form.description.data,
             price=form.price.data,
             stock=form.stock.data,
-            image_url=form.image_url.data,
+            image_url=image_url,
             merchant_id=current_user.id
         )
         db.session.add(product)
@@ -49,11 +62,18 @@ def edit_product(id):
     
     form = ProductForm(obj=product)
     if form.validate_on_submit():
+        if form.image.data:
+            f = form.image.data
+            filename = secure_filename(f.filename)
+            filename = f"{uuid.uuid4().hex}_{filename}"
+            upload_path = os.path.join(current_app.config['UPLOAD_FOLDER'], filename)
+            f.save(upload_path)
+            product.image_url = f"uploads/{filename}"
+
         product.name = form.name.data
         product.description = form.description.data
         product.price = form.price.data
         product.stock = form.stock.data
-        product.image_url = form.image_url.data
         db.session.commit()
         flash('商品已更新！', 'success')
         return redirect(url_for('merchant.dashboard'))

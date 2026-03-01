@@ -28,12 +28,14 @@ class RegistrationForm(FlaskForm):
         if user:
             raise ValidationError('该邮箱已被注册。')
 
+from flask_wtf.file import FileField, FileAllowed
+
 class ProductForm(FlaskForm):
     name = StringField('商品名称', validators=[DataRequired()])
     description = TextAreaField('商品描述')
     price = FloatField('价格', validators=[DataRequired(), NumberRange(min=0)])
     stock = IntegerField('库存', validators=[DataRequired(), NumberRange(min=0)])
-    image_url = StringField('图片链接')
+    image = FileField('商品图片', validators=[FileAllowed(['jpg', 'png', 'jpeg', 'gif'], 'Images only!')])
     submit = SubmitField('提交')
 
 class AddToCartForm(FlaskForm):
