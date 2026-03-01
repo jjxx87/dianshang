@@ -2,6 +2,7 @@ from flask import Blueprint, render_template, redirect, url_for, flash, request,
 from flask_login import login_required, current_user
 from app import db
 from app.models import Product, Order, OrderItem
+from app.forms import EditProfileForm
 
 bp = Blueprint('user', __name__)
 
@@ -14,6 +15,25 @@ def check_login():
 def dashboard():
     orders = Order.query.filter_by(user_id=current_user.id).order_by(Order.created_at.desc()).all()
     return render_template('user/dashboard.html', title='用户中心', orders=orders)
+
+@bp.route('/profile', methods=['GET', 'POST'])
+@login_required
+def profile():
+    form = EditProfileForm(original_username=current_user.username, original_email=current_user.email)
+    if form.validate_on_submit():
+        current_user.username = form.username.data
+        current_user.email = form.email.data
+        if current_user.is_merchant:
+            current_user.store_name = form.store_name.data
+        db.session.commit()
+        flash('您的个人信息已更新。', 'success')
+        return redirect(url_for('user.profile'))
+    elif request.method == 'GET':
+        form.username.data = current_user.username
+        form.email.data = current_user.email
+        if current_user.is_merchant:
+            form.store_name.data = current_user.store_name
+    return render_template('user/profile.html', title='个人信息', form=form)
 
 @bp.route('/cart')
 def cart():

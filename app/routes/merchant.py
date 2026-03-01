@@ -68,3 +68,37 @@ def delete_product(id):
     db.session.commit()
     flash('商品已删除。', 'success')
     return redirect(url_for('merchant.dashboard'))
+
+@bp.route('/orders')
+@login_required
+def orders():
+    # 查找包含当前商户商品的订单
+    orders = Order.query.join(Order.items).join(OrderItem.product).filter(Product.merchant_id == current_user.id).distinct().all()
+    return render_template('merchant/orders.html', title='订单管理', orders=orders)
+
+@bp.route('/order/<int:order_id>')
+@login_required
+def order_detail(order_id):
+    order = Order.query.get_or_404(order_id)
+    # 检查该订单是否包含当前商户的商品
+    items = OrderItem.query.join(OrderItem.product).filter(OrderItem.order_id == order_id, Product.merchant_id == current_user.id).all()
+    
+    if not items:
+        abort(403) # 不属于该商户的订单
+        
+    total_amount = sum(item.price * item.quantity for item in items)
+    
+    return render_template('merchant/order_detail.html', title='订单详情', order=order, items=items, total_amount=total_amount)
+
+@bp.route('/ship_item/<int:item_id>', methods=['POST'])
+@login_required
+def ship_item(item_id):
+    item = OrderItem.query.get_or_404(item_id)
+    # 检查商品是否属于当前商户
+    if item.product.merchant_id != current_user.id:
+        abort(403)
+        
+    item.status = 'shipped'
+    db.session.commit()
+    flash('商品状态已更新为已发货。', 'success')
+    return redirect(url_for('merchant.order_detail', order_id=item.order_id))

@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">订单详情 #{{ order.id }}</h2>
+    <div class="row">
+        <div class="col-md-3">
+            <div class="card mb-3">
+                <div class="card-header">菜单</div>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item"><a href="{{ url_for('merchant.dashboard') }}">商品管理</a></li>
+                    <li class="list-group-item"><a href="{{ url_for('merchant.orders') }}">订单管理</a></li>
+                </ul>
+            </div>
+            <a href="{{ url_for('merchant.orders') }}" class="btn btn-secondary w-100">返回订单列表</a>
+        </div>
+        <div class="col-md-9">
+            <div class="card mb-4">
+                <div class="card-header">订单信息</div>
+                <div class="card-body">
+                    <p><strong>买家:</strong> {{ order.buyer.username }} ({{ order.buyer.email }})</p>
+                    <p><strong>下单时间:</strong> {{ order.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+                    <p><strong>总金额 (本商户部分):</strong> ¥{{ total_amount }}</p>
+                </div>
+            </div>
+
+            <h3>包含商品</h3>
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>商品名称</th>
+                        <th>数量</th>
+                        <th>单价</th>
+                        <th>小计</th>
+                        <th>状态</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>¥{{ item.price }}</td>
+                        <td>¥{{ item.price * item.quantity }}</td>
+                        <td>
+                            {% if item.status == 'shipped' %}
+                            <span class="badge bg-success">已发货</span>
+                            {% else %}
+                            <span class="badge bg-warning text-dark">待发货</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.status == 'pending' %}
+                            <form action="{{ url_for('merchant.ship_item', item_id=item.id) }}" method="POST">
+                                <button type="submit" class="btn btn-sm btn-primary">发货</button>
+                            </form>
+                            {% else %}
+                            <button class="btn btn-sm btn-secondary" disabled>已处理</button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

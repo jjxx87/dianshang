@@ -60,5 +60,6 @@ class OrderItem(db.Model):
     product_id = db.Column(db.Integer, db.ForeignKey('product.id'))
     quantity = db.Column(db.Integer)
     price = db.Column(db.Float) # 购买时的单价
+    status = db.Column(db.String(20), default='pending') # pending, shipped
 
     product = db.relationship('Product')

@@ -39,3 +39,26 @@ class ProductForm(FlaskForm):
 class AddToCartForm(FlaskForm):
     quantity = IntegerField('数量', validators=[DataRequired(), NumberRange(min=1)], default=1)
     submit = SubmitField('加入购物车')
+
+class EditProfileForm(FlaskForm):
+    username = StringField('用户名', validators=[DataRequired()])
+    email = StringField('邮箱', validators=[DataRequired(), Email()])
+    store_name = StringField('店铺名称 (仅商户)')
+    submit = SubmitField('更新信息')
+
+    def __init__(self, original_username, original_email, *args, **kwargs):
+        super(EditProfileForm, self).__init__(*args, **kwargs)
+        self.original_username = original_username
+        self.original_email = original_email
+
+    def validate_username(self, username):
+        if username.data != self.original_username:
+            user = User.query.filter_by(username=username.data).first()
+            if user:
+                raise ValidationError('该用户名已被使用。')
+
+    def validate_email(self, email):
+        if email.data != self.original_email:
+            user = User.query.filter_by(email=email.data).first()
+            if user:
+                raise ValidationError('该邮箱已被注册。')
