@@ -1,39 +1,87 @@
 {% extends "base.html" %}
 
 {% block content %}
+
+{% if not search_query %}
+<!-- Hero Section -->
+{% if not current_user.is_authenticated %}
+<div class="p-5 mb-4 bg-light rounded-3 shadow-sm" style="background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);">
+    <div class="container-fluid text-center">
+        <h1 class="display-5 fw-bold text-primary">欢迎来到电商系统</h1>
+        <p class="col-md-8 fs-4 mx-auto text-muted">发现最新、最热的商品，享受极致的购物体验。</p>
+        <a class="btn btn-primary btn-lg px-4 gap-3 shadow-sm" href="{{ url_for('auth.register') }}">立即注册</a>
+        <a class="btn btn-outline-secondary btn-lg px-4" href="{{ url_for('auth.login') }}">登录</a>
+    </div>
+</div>
+{% endif %}
+{% else %}
+<div class="mb-4">
+    <h3>搜索结果: <span class="text-primary">"{{ search_query }}"</span></h3>
+    <a href="{{ url_for('main.index') }}" class="btn btn-sm btn-outline-secondary">返回首页</a>
+</div>
+{% endif %}
+
 <div class="row">
-    {% for product in products %}
-    <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            {% if product.image_url %}
-            {% if product.image_url.startswith('http') %}
-            <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
-            {% else %}
-            <img src="{{ url_for('static', filename=product.image_url) }}" class="card-img-top" alt="{{ product.name }}" style="height: 200px; object-fit: cover;">
-            {% endif %}
-            {% else %}
-            <div class="card-img-top bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">无图片</div>
-            {% endif %}
-            <div class="card-body">
-                <h5 class="card-title">{{ product.name }}</h5>
-                <p class="card-text text-truncate">{{ product.description }}</p>
-                <p class="card-text text-danger fw-bold">¥{{ product.price }}</p>
-                <p class="card-text"><small class="text-muted">库存: {{ product.stock }}</small></p>
-            </div>
-            <div class="card-footer bg-transparent border-top-0">
-                {% if current_user.is_authenticated and not current_user.is_merchant %}
-                <form action="{{ url_for('user.add_to_cart', product_id=product.id) }}" method="POST">
-                    <div class="input-group">
-                        <input type="number" name="quantity" class="form-control" value="1" min="1" max="{{ product.stock }}">
-                        <button class="btn btn-primary" type="submit">加入购物车</button>
+    {% if products %}
+        {% for product in products %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 shadow-sm border-0">
+                <div class="position-relative">
+                    {% if product.image_url %}
+                        {% if product.image_url.startswith('http') %}
+                        <img src="{{ product.image_url }}" class="card-img-top" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
+                        {% else %}
+                        <img src="{{ url_for('static', filename=product.image_url) }}" class="card-img-top" alt="{{ product.name }}" style="height: 250px; object-fit: cover;">
+                        {% endif %}
+                    {% else %}
+                    <div class="card-img-top bg-light text-secondary d-flex align-items-center justify-content-center" style="height: 250px;">
+                        <i class="fas fa-image fa-3x"></i>
                     </div>
-                </form>
-                {% elif not current_user.is_authenticated %}
-                <a href="{{ url_for('auth.login') }}" class="btn btn-primary w-100">登录购买</a>
-                {% endif %}
+                    {% endif %}
+                    <span class="position-absolute top-0 end-0 badge rounded-pill bg-danger m-2">
+                        热卖
+                    </span>
+                </div>
+                
+                <div class="card-body">
+                    <h5 class="card-title fw-bold">{{ product.name }}</h5>
+                    <p class="card-text text-muted text-truncate">{{ product.description }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="h5 mb-0 text-danger fw-bold">¥{{ product.price }}</span>
+                        <small class="text-muted"><i class="fas fa-box me-1"></i>库存: {{ product.stock }}</small>
+                    </div>
+                </div>
+                <div class="card-footer bg-white border-top-0 pb-3">
+                    {% if current_user.is_authenticated and not current_user.is_merchant %}
+                    <form action="{{ url_for('user.add_to_cart', product_id=product.id) }}" method="POST">
+                        <div class="input-group">
+                            <input type="number" name="quantity" class="form-control text-center" value="1" min="1" max="{{ product.stock }}" style="max-width: 80px;">
+                            <button class="btn btn-primary flex-grow-1" type="submit">
+                                <i class="fas fa-cart-plus me-1"></i> 加入购物车
+                            </button>
+                        </div>
+                    </form>
+                    {% elif not current_user.is_authenticated %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-outline-primary w-100">
+                        <i class="fas fa-sign-in-alt me-1"></i> 登录购买
+                    </a>
+                    {% else %}
+                    <button class="btn btn-secondary w-100" disabled>
+                        <i class="fas fa-store me-1"></i> 商户不可购买
+                    </button>
+                    {% endif %}
+                </div>
             </div>
         </div>
-    </div>
-    {% endfor %}
+        {% endfor %}
+    {% else %}
+        <div class="col-12 text-center py-5">
+            <div class="text-muted mb-3">
+                <i class="fas fa-search fa-4x"></i>
+            </div>
+            <h4>没有找到相关商品</h4>
+            <p class="text-muted">换个关键词试试？</p>
+        </div>
+    {% endif %}
 </div>
 {% endblock %}
